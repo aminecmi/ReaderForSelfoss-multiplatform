@@ -2,7 +2,6 @@ package bou.amine.apps.readerforselfossv2.utils
 
 import android.text.format.DateUtils
 import bou.amine.apps.readerforselfossv2.rest.SelfossModel
-import bou.amine.apps.readerforselfossv2.service.ApiDetailsService
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.OffsetDateTime
@@ -15,12 +14,12 @@ fun SelfossModel.Item.parseDate(dateUtils: bou.amine.apps.readerforselfossv2.uti
 fun SelfossModel.Item.parseRelativeDate(dateUtils: bou.amine.apps.readerforselfossv2.utils.DateUtils): String =
     dateUtils.parseRelativeDate(this.datetime)
 
-class DateUtils(private val apiDetailsService: ApiDetailsService) {
+class DateUtils(private val apiMajorVersion: Int) {
     fun parseDate(dateString: String): Instant {
 
         val FORMATTERV1 = "yyyy-MM-dd HH:mm:ss"
 
-        return if (apiDetailsService.getApiVersion() >= 4) {
+        return if (apiMajorVersion >= 4) {
             OffsetDateTime.parse(dateString).toInstant()
         } else {
             LocalDateTime.parse(dateString, DateTimeFormatter.ofPattern(FORMATTERV1)).toInstant(ZoneOffset.UTC)

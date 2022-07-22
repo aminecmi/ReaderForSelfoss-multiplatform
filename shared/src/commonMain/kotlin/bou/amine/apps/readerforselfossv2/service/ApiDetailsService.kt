@@ -6,4 +6,5 @@ interface ApiDetailsService {
     fun getBaseUrl(): String
     fun getUserName(): String
     fun getPassword(): String
+    fun refresh()
 }

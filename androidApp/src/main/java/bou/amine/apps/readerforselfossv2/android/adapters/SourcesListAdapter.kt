@@ -16,25 +16,29 @@ import bou.amine.apps.readerforselfossv2.android.utils.Config
 import bou.amine.apps.readerforselfossv2.android.utils.glide.circularBitmapDrawable
 import bou.amine.apps.readerforselfossv2.android.utils.network.isNetworkAvailable
 import bou.amine.apps.readerforselfossv2.android.utils.toTextDrawableString
-import bou.amine.apps.readerforselfossv2.rest.SelfossApi
+import bou.amine.apps.readerforselfossv2.repository.Repository
 import bou.amine.apps.readerforselfossv2.rest.SelfossModel
-import bou.amine.apps.readerforselfossv2.service.ApiDetailsService
 import com.amulyakhare.textdrawable.TextDrawable
 import com.amulyakhare.textdrawable.util.ColorGenerator
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.kodein.di.DI
+import org.kodein.di.DIAware
+import org.kodein.di.android.closestDI
+import org.kodein.di.instance
 
 class SourcesListAdapter(
     private val app: Activity,
-    private val items: ArrayList<SelfossModel.Source>,
-    private val api: SelfossApi,
-    private val apiDetailsService: ApiDetailsService
-) : RecyclerView.Adapter<SourcesListAdapter.ViewHolder>() {
+    private val items: ArrayList<SelfossModel.Source>
+) : RecyclerView.Adapter<SourcesListAdapter.ViewHolder>(), DIAware {
     private val c: Context = app.baseContext
     private val generator: ColorGenerator = ColorGenerator.MATERIAL
     private lateinit var config: Config
     private lateinit var binding: SourceListItemBinding
+
+    override val di: DI by closestDI(app)
+    private val repository : Repository by instance()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         binding = SourceListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -43,9 +47,9 @@ class SourcesListAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val itm = items[position]
-        config = Config(c)
+        config = Config()
 
-        if (itm.getIcon(apiDetailsService.getBaseUrl()).isEmpty()) {
+        if (itm.getIcon(repository.baseUrl).isEmpty()) {
             val color = generator.getColor(itm.getTitleDecoded())
 
             val drawable =
@@ -55,7 +59,7 @@ class SourcesListAdapter(
                     .build(itm.getTitleDecoded().toTextDrawableString(c), color)
             binding.itemImage.setImageDrawable(drawable)
         } else {
-            c.circularBitmapDrawable(config, itm.getIcon(apiDetailsService.getBaseUrl()), binding.itemImage)
+            c.circularBitmapDrawable(config, itm.getIcon(repository.baseUrl), binding.itemImage)
         }
 
         binding.sourceTitle.text = itm.getTitleDecoded()
@@ -77,8 +81,8 @@ class SourcesListAdapter(
                 if (c.isNetworkAvailable(null)) {
                     val (id) = items[adapterPosition]
                     CoroutineScope(Dispatchers.IO).launch {
-                        val action = api.deleteSource(id)
-                        if (action != null && action.isSuccess) {
+                        val successfullyDeletedSource = repository.deleteSource(id)
+                        if (successfullyDeletedSource) {
                             items.removeAt(adapterPosition)
                             notifyItemRemoved(adapterPosition)
                             notifyItemRangeChanged(adapterPosition, itemCount)

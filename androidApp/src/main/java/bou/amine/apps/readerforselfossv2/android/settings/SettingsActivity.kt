@@ -17,6 +17,7 @@ import bou.amine.apps.readerforselfossv2.android.databinding.ActivitySettingsBin
 import bou.amine.apps.readerforselfossv2.android.themes.Toppings
 import bou.amine.apps.readerforselfossv2.android.utils.Config
 import com.ftinc.scoop.Scoop
+import com.russhwolf.settings.Settings
 import java.lang.NumberFormatException
 
 private const val TITLE_TAG = "settingsActivityTitle"
@@ -173,14 +174,12 @@ class SettingsActivity : AppCompatActivity(),
         override fun onOptionsItemSelected(item: MenuItem): Boolean {
             val id = item.itemId
             if (id == R.id.clear) {
-                val pref = PreferenceManager.getDefaultSharedPreferences(activity)
-                val editor = pref.edit()
-                editor.remove("color_primary")
-                editor.remove("color_primary_dark")
-                editor.remove("color_accent")
-                editor.remove("color_accent_dark")
-                editor.remove("dark_theme")
-                editor.apply()
+                val settings = Settings()
+                settings.remove("color_primary")
+                settings.remove("color_primary_dark")
+                settings.remove("color_accent")
+                settings.remove("color_accent_dark")
+                settings.remove("dark_theme")
                 requireActivity().recreate()
             }
             return super.onOptionsItemSelected(item)

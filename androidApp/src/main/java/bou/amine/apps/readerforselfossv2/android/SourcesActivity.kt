@@ -1,36 +1,33 @@
 package bou.amine.apps.readerforselfossv2.android
 
-import android.content.Context
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.os.Bundle
-import androidx.preference.PreferenceManager
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
-import android.widget.Toast
 import bou.amine.apps.readerforselfossv2.android.adapters.SourcesListAdapter
 import bou.amine.apps.readerforselfossv2.android.databinding.ActivitySourcesBinding
-import bou.amine.apps.readerforselfossv2.android.service.AndroidApiDetailsService
 import bou.amine.apps.readerforselfossv2.android.themes.AppColors
 import bou.amine.apps.readerforselfossv2.android.themes.Toppings
-import bou.amine.apps.readerforselfossv2.android.utils.Config
 import bou.amine.apps.readerforselfossv2.android.utils.network.isNetworkAvailable
-import bou.amine.apps.readerforselfossv2.rest.SelfossApi
+import bou.amine.apps.readerforselfossv2.repository.Repository
 import bou.amine.apps.readerforselfossv2.rest.SelfossModel
-import bou.amine.apps.readerforselfossv2.service.ApiDetailsService
 import com.ftinc.scoop.Scoop
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import java.util.ArrayList
+import org.kodein.di.DIAware
+import org.kodein.di.android.closestDI
+import org.kodein.di.instance
 
-class SourcesActivity : AppCompatActivity() {
+class SourcesActivity : AppCompatActivity(), DIAware {
 
     private lateinit var appColors: AppColors
     private lateinit var binding: ActivitySourcesBinding
+
+    override val di by closestDI()
+    private val repository : Repository by instance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         appColors = AppColors(this@SourcesActivity)
@@ -62,18 +59,6 @@ class SourcesActivity : AppCompatActivity() {
         super.onResume()
         val mLayoutManager = LinearLayoutManager(this)
 
-        val settings =
-            getSharedPreferences(Config.settingsName, Context.MODE_PRIVATE)
-        val prefs = PreferenceManager.getDefaultSharedPreferences(this)
-
-        val apiDetailsService = AndroidApiDetailsService(this@SourcesActivity)
-        val api = SelfossApi(
-//            this,
-//            this@SourcesActivity,
-//            settings.getBoolean("isSelfSignedCert", false),
-//            prefs.getString("api_timeout", "-1")!!.toLong()
-            apiDetailsService
-        )
         var items: ArrayList<SelfossModel.Source>
 
         binding.recyclerView.setHasFixedSize(true)
@@ -81,11 +66,11 @@ class SourcesActivity : AppCompatActivity() {
 
         if (this@SourcesActivity.isNetworkAvailable(binding.recyclerView)) {
             CoroutineScope(Dispatchers.Main).launch {
-                val response = api.sources()
+                val response = repository.getSources()
                 if (response != null) {
                     items = response
-                    val mAdapter = SourcesListAdapter(this@SourcesActivity, items, api,
-                        apiDetailsService
+                    val mAdapter = SourcesListAdapter(
+                        this@SourcesActivity, items
                     )
                     binding.recyclerView.adapter = mAdapter
                     mAdapter.notifyDataSetChanged()

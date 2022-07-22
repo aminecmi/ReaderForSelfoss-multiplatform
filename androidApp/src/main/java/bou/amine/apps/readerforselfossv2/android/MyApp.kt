@@ -6,30 +6,40 @@ import android.content.Context
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
-import androidx.preference.PreferenceManager
 import android.widget.ImageView
 import androidx.multidex.MultiDexApplication
+import androidx.preference.PreferenceManager
+import bou.amine.apps.readerforselfossv2.DI.networkModule
 import bou.amine.apps.readerforselfossv2.android.utils.Config
 import bou.amine.apps.readerforselfossv2.android.utils.glide.loadMaybeBasicAuth
+import bou.amine.apps.readerforselfossv2.repository.Repository
+import bou.amine.apps.readerforselfossv2.repository.RepositoryImpl
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.ftinc.scoop.Scoop
 import com.mikepenz.materialdrawer.util.AbstractDrawerImageLoader
 import com.mikepenz.materialdrawer.util.DrawerImageLoader
+import com.russhwolf.settings.Settings
+import org.kodein.di.*
 import java.util.UUID.randomUUID
 
-class MyApp : MultiDexApplication() {
+class MyApp : MultiDexApplication(), DIAware {
+
+    override val di by DI.lazy {
+        import(networkModule)
+        bind<Repository>() with singleton { RepositoryImpl(instance(), instance()) }
+    }
+
     private lateinit var config: Config
+    private lateinit var settings : Settings
 
     override fun onCreate() {
         super.onCreate()
-        config = Config(baseContext)
+        config = Config()
+        settings = Settings()
 
-        val prefs = getSharedPreferences(Config.settingsName, Context.MODE_PRIVATE)
-        if (prefs.getString("unique_id", "")!!.isEmpty()) {
-            val editor = prefs.edit()
-            editor.putString("unique_id", randomUUID().toString())
-            editor.apply()
+        if (settings.getString("unique_id", "").isEmpty()) {
+            settings.putString("unique_id", randomUUID().toString())
         }
 
         initDrawerImageLoader()

@@ -17,7 +17,7 @@ import bou.amine.apps.readerforselfossv2.android.utils.customtabs.CustomTabActiv
 import bou.amine.apps.readerforselfossv2.android.utils.glide.bitmapCenterCrop
 import bou.amine.apps.readerforselfossv2.android.utils.glide.circularBitmapDrawable
 import bou.amine.apps.readerforselfossv2.android.utils.network.isNetworkAvailable
-import bou.amine.apps.readerforselfossv2.rest.SelfossApi
+import bou.amine.apps.readerforselfossv2.repository.Repository
 import bou.amine.apps.readerforselfossv2.rest.SelfossModel
 import bou.amine.apps.readerforselfossv2.service.ApiDetailsService
 import bou.amine.apps.readerforselfossv2.service.SearchService
@@ -28,11 +28,13 @@ import com.bumptech.glide.Glide
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.kodein.di.DI
+import org.kodein.di.android.closestDI
+import org.kodein.di.instance
 
 class ItemCardAdapter(
     override val app: Activity,
     override var items: ArrayList<SelfossModel.Item>,
-    override val api: SelfossApi,
     override val apiDetailsService: ApiDetailsService,
     override val db: AppDatabase,
     private val helper: CustomTabActivityHelper,
@@ -50,6 +52,9 @@ class ItemCardAdapter(
     private val imageMaxHeight: Int =
         c.resources.getDimension(R.dimen.card_image_max_height).toInt()
 
+    override val di: DI by closestDI(app)
+    override val repository : Repository by instance()
+
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding = CardItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
         return ViewHolder(binding)
@@ -66,7 +71,7 @@ class ItemCardAdapter(
 
             binding.title.setLinkTextColor(appColors.colorAccent)
 
-            binding.sourceTitleAndDate.text = itm.sourceAndDateText(DateUtils(apiDetailsService))
+            binding.sourceTitleAndDate.text = itm.sourceAndDateText(DateUtils(repository.apiMajorVersion))
 
             if (!fullHeightCards) {
                 binding.itemImage.maxHeight = imageMaxHeight
@@ -114,15 +119,15 @@ class ItemCardAdapter(
                 if (c.isNetworkAvailable()) {
                     if (item.starred) {
                         CoroutineScope(Dispatchers.IO).launch {
-                            api.unstarr(item.id.toString())
-                            // TODO: save to db
+                            repository.unstarr(item.id.toString())
+                            // TODO: Handle failure
                         }
                         item.starred = false
                         binding.favButton.isSelected = false
                     } else {
                         CoroutineScope(Dispatchers.IO).launch {
-                            api.starr(item.id.toString())
-                            // TODO: save to db
+                            repository.starr(item.id.toString())
+                            // TODO: Handle failure
                         }
                         item.starred = true
                         binding.favButton.isSelected = true

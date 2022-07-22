@@ -5,7 +5,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import androidx.preference.PreferenceManager
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationCompat.PRIORITY_DEFAULT
 import androidx.core.app.NotificationCompat.PRIORITY_LOW
@@ -13,6 +12,7 @@ import androidx.room.Room
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import bou.amine.apps.readerforselfossv2.android.MainActivity
+import bou.amine.apps.readerforselfossv2.android.MyApp
 import bou.amine.apps.readerforselfossv2.android.R
 import bou.amine.apps.readerforselfossv2.android.model.preloadImages
 import bou.amine.apps.readerforselfossv2.android.persistence.AndroidDeviceDatabase
@@ -22,33 +22,38 @@ import bou.amine.apps.readerforselfossv2.android.persistence.entities.ActionEnti
 import bou.amine.apps.readerforselfossv2.android.persistence.migrations.MIGRATION_1_2
 import bou.amine.apps.readerforselfossv2.android.persistence.migrations.MIGRATION_2_3
 import bou.amine.apps.readerforselfossv2.android.persistence.migrations.MIGRATION_3_4
-import bou.amine.apps.readerforselfossv2.android.service.AndroidApiDetailsService
 import bou.amine.apps.readerforselfossv2.android.utils.Config
 import bou.amine.apps.readerforselfossv2.android.utils.network.isNetworkAvailable
+import bou.amine.apps.readerforselfossv2.repository.Repository
 
-import bou.amine.apps.readerforselfossv2.rest.SelfossApi
+import bou.amine.apps.readerforselfossv2.rest.SelfossApiImpl
 import bou.amine.apps.readerforselfossv2.rest.SelfossModel
+import bou.amine.apps.readerforselfossv2.service.ApiDetailsService
 import bou.amine.apps.readerforselfossv2.service.SearchService
 import bou.amine.apps.readerforselfossv2.service.SelfossService
 import bou.amine.apps.readerforselfossv2.utils.DateUtils
+import com.russhwolf.settings.Settings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.kodein.di.DIAware
+import org.kodein.di.instance
 import java.util.*
 import kotlin.concurrent.schedule
 import kotlin.concurrent.thread
 
-class LoadingWorker(val context: Context, params: WorkerParameters) : Worker(context, params) {
+class LoadingWorker(val context: Context, params: WorkerParameters) : Worker(context, params), DIAware {
     lateinit var db: AppDatabase
 
+    override val di by lazy { (applicationContext as MyApp).di }
+    private val apiDetailsService : ApiDetailsService by instance()
+    private val repository : Repository by instance()
+
 override fun doWork(): Result {
-    val settings =
-        this.context.getSharedPreferences(Config.settingsName, Context.MODE_PRIVATE)
-    val sharedPref = PreferenceManager.getDefaultSharedPreferences(this.context)
-    val periodicRefresh = sharedPref.getBoolean("periodic_refresh", false)
+    val settings = Settings()
+    val periodicRefresh = settings.getBoolean("periodic_refresh", false)
     if (periodicRefresh) {
-        val apiDetailsService = AndroidApiDetailsService(this.context)
-        val api = SelfossApi(
+        val api = SelfossApiImpl(
 //            this.context,
 //            null,
 //            settings.getBoolean("isSelfSignedCert", false),
@@ -56,7 +61,7 @@ override fun doWork(): Result {
             apiDetailsService
         )
 
-        val dateUtils = DateUtils(apiDetailsService)
+        val dateUtils = DateUtils(repository.apiMajorVersion)
         val searchService = SearchService(dateUtils)
         val service = SelfossService(api, AndroidDeviceDatabaseService(AndroidDeviceDatabase(applicationContext), searchService), searchService)
 
@@ -77,7 +82,7 @@ override fun doWork(): Result {
 
                 notificationManager.notify(1, notification.build())
 
-                val notifyNewItems = sharedPref.getBoolean("notify_new_items", false)
+                val notifyNewItems = settings.getBoolean("notify_new_items", false)
 
                 db = Room.databaseBuilder(
                     applicationContext,

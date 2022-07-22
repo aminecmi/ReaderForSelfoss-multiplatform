@@ -3,28 +3,27 @@ package bou.amine.apps.readerforselfossv2.android.utils
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
-import androidx.preference.PreferenceManager
 import bou.amine.apps.readerforselfossv2.android.LoginActivity
+import com.russhwolf.settings.Settings
 
-class Config(c: Context) {
+class Config {
 
-    val settings: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(c)
+    val settings = Settings()
 
     val baseUrl: String
-        get() = settings.getString("url", "")!!
+        get() = settings.getString("url", "")
 
     val userLogin: String
-        get() = settings.getString("login", "")!!
+        get() = settings.getString("login", "")
 
     val userPassword: String
-        get() = settings.getString("password", "")!!
+        get() = settings.getString("password", "")
 
     val httpUserLogin: String
-        get() = settings.getString("httpUserName", "")!!
+        get() = settings.getString("httpUserName", "")
 
     val httpUserPassword: String
-        get() = settings.getString("httpPassword", "")!!
+        get() = settings.getString("httpPassword", "")
 
     companion object {
         const val settingsName = "paramsselfoss"
@@ -47,11 +46,10 @@ class Config(c: Context) {
         fun logoutAndRedirect(
             c: Context,
             callingActivity: Activity,
-            editor: SharedPreferences.Editor,
             baseUrlFail: Boolean = false
         ): Boolean {
-            val settings = PreferenceManager.getDefaultSharedPreferences(c)
-            settings.edit().clear().commit()
+            val settings = Settings()
+            settings.clear()
             val intent = Intent(c, LoginActivity::class.java)
             if (baseUrlFail) {
                 intent.putExtra("baseUrlFail", baseUrlFail)

@@ -2,8 +2,8 @@ package bou.amine.apps.readerforselfossv2.android.themes
 
 import android.app.Activity
 import androidx.annotation.ColorInt
-import androidx.preference.PreferenceManager
 import bou.amine.apps.readerforselfossv2.android.R
+import com.russhwolf.settings.Settings
 
 class AppColors(a: Activity) {
 
@@ -16,30 +16,30 @@ class AppColors(a: Activity) {
     val isDarkTheme: Boolean
 
     init {
-        val sharedPref = PreferenceManager.getDefaultSharedPreferences(a)
+        val settings = Settings()
 
         colorPrimary =
-                sharedPref.getInt(
+                settings.getInt(
                     "color_primary",
                     a.resources.getColor(R.color.colorPrimary)
                 )
         colorPrimaryDark =
-                sharedPref.getInt(
+                settings.getInt(
                     "color_primary_dark",
                     a.resources.getColor(R.color.colorPrimaryDark)
                 )
         colorAccent =
-                sharedPref.getInt(
+                settings.getInt(
                     "color_accent",
                     a.resources.getColor(R.color.colorAccent)
                 )
         colorAccentDark =
-                sharedPref.getInt(
+                settings.getInt(
                     "color_accent_dark",
                     a.resources.getColor(R.color.colorAccentDark)
                 )
         isDarkTheme =
-                sharedPref.getBoolean(
+                settings.getBoolean(
                     "dark_theme",
                     false
                 )

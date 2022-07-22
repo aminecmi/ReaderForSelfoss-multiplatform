@@ -13,18 +13,20 @@ import bou.amine.apps.readerforselfossv2.android.utils.*
 import bou.amine.apps.readerforselfossv2.android.utils.customtabs.CustomTabActivityHelper
 import bou.amine.apps.readerforselfossv2.android.utils.glide.bitmapCenterCrop
 import bou.amine.apps.readerforselfossv2.android.utils.glide.circularBitmapDrawable
-import bou.amine.apps.readerforselfossv2.rest.SelfossApi
+import bou.amine.apps.readerforselfossv2.repository.Repository
 import bou.amine.apps.readerforselfossv2.rest.SelfossModel
 import bou.amine.apps.readerforselfossv2.service.ApiDetailsService
 import bou.amine.apps.readerforselfossv2.service.SearchService
 import bou.amine.apps.readerforselfossv2.utils.DateUtils
 import com.amulyakhare.textdrawable.TextDrawable
 import com.amulyakhare.textdrawable.util.ColorGenerator
+import org.kodein.di.DI
+import org.kodein.di.android.closestDI
+import org.kodein.di.instance
 
 class ItemListAdapter(
     override val app: Activity,
     override var items: ArrayList<SelfossModel.Item>,
-    override val api: SelfossApi,
     override val apiDetailsService: ApiDetailsService,
     override val db: AppDatabase,
     private val helper: CustomTabActivityHelper,
@@ -38,6 +40,9 @@ class ItemListAdapter(
 ) : ItemsAdapter<ItemListAdapter.ViewHolder>() {
     private val generator: ColorGenerator = ColorGenerator.MATERIAL
     private val c: Context = app.baseContext
+
+    override val di: DI by closestDI(app)
+    override val repository : Repository by instance()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
         val binding = ListItemBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -54,7 +59,7 @@ class ItemListAdapter(
 
             binding.title.setLinkTextColor(appColors.colorAccent)
 
-            binding.sourceTitleAndDate.text = itm.sourceAndDateText(DateUtils(apiDetailsService))
+            binding.sourceTitleAndDate.text = itm.sourceAndDateText(DateUtils(repository.apiMajorVersion))
 
             if (itm.getThumbnail(apiDetailsService.getBaseUrl()).isEmpty()) {
 

@@ -8,7 +8,7 @@ import bou.amine.apps.readerforselfossv2.android.R
 import bou.amine.apps.readerforselfossv2.android.persistence.database.AppDatabase
 import bou.amine.apps.readerforselfossv2.android.themes.AppColors
 import bou.amine.apps.readerforselfossv2.android.utils.Config
-import bou.amine.apps.readerforselfossv2.rest.SelfossApi
+import bou.amine.apps.readerforselfossv2.repository.Repository
 import bou.amine.apps.readerforselfossv2.rest.SelfossModel
 import bou.amine.apps.readerforselfossv2.service.ApiDetailsService
 import bou.amine.apps.readerforselfossv2.service.SearchService
@@ -16,11 +16,12 @@ import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.kodein.di.DIAware
 
-abstract class ItemsAdapter<VH : RecyclerView.ViewHolder?> : RecyclerView.Adapter<VH>() {
+abstract class ItemsAdapter<VH : RecyclerView.ViewHolder?> : RecyclerView.Adapter<VH>(), DIAware {
     abstract var items: ArrayList<SelfossModel.Item>
-    abstract val api: SelfossApi
     abstract val apiDetailsService: ApiDetailsService
+    abstract val repository: Repository
     abstract val db: AppDatabase
     abstract val userIdentifier: String
     abstract val app: Activity
@@ -82,7 +83,7 @@ abstract class ItemsAdapter<VH : RecyclerView.ViewHolder?> : RecyclerView.Adapte
     private fun readItemAtIndex(position: Int, showSnackbar: Boolean = true) {
         val i = items[position]
         CoroutineScope(Dispatchers.IO).launch {
-            api.markAsRead(i.id.toString())
+            repository.markAsRead(i.id.toString())
             // TODO: update db
 
         }
@@ -101,7 +102,7 @@ abstract class ItemsAdapter<VH : RecyclerView.ViewHolder?> : RecyclerView.Adapte
 
     private fun unreadItemAtIndex(position: Int, showSnackbar: Boolean = true) {
         CoroutineScope(Dispatchers.IO).launch {
-            api.unmarkAsRead(items[position].id.toString())
+            repository.unmarkAsRead(items[position].id.toString())
             // Todo: SharedItems.unreadItem(app, api, db, items[position])
             // TODO: update db
 

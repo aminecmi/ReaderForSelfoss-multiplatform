@@ -1,13 +1,13 @@
 package bou.amine.apps.readerforselfossv2.android.utils.glide
 
 import android.content.Context
-import bou.amine.apps.readerforselfossv2.android.utils.Config
 import bou.amine.apps.readerforselfossv2.android.utils.getUnsafeHttpClient
 import com.bumptech.glide.Glide
 import com.bumptech.glide.GlideBuilder
 import com.bumptech.glide.Registry
 import com.bumptech.glide.load.model.GlideUrl
 import com.bumptech.glide.module.GlideModule
+import com.russhwolf.settings.Settings
 import java.io.InputStream
 
 class SelfSignedGlideModule : GlideModule {
@@ -18,8 +18,8 @@ class SelfSignedGlideModule : GlideModule {
     override fun registerComponents(context: Context?, glide: Glide?, registry: Registry?) {
 
         if (context != null) {
-            val pref = context?.getSharedPreferences(Config.settingsName, Context.MODE_PRIVATE)
-            if (pref.getBoolean("isSelfSignedCert", false)) {
+            val settings = Settings()
+            if (settings.getBoolean("isSelfSignedCert", false)) {
                 val client = getUnsafeHttpClient().build()
 
                 registry?.append(
